@@ -32,7 +32,13 @@ class MoviesController < ApplicationController
       elsif params[:sort_by] == "release_date"
         @movies = @movies.order(:release_date)
       end
+    elsif session.has_key?(:sort_by)
+      ## We use the saved sort_by options if user has selected, but we have refreshed
+      params[:sort_by] = session[:sort_by]
     end
+
+    ## We hash the title / release date so that we remember after refreshing
+    session[:sort_by] = params[:sort_by]
 
     ## Highlight the appropriate sorting method, if selected
     @hilite_header_title = (params[:sort_by] == "title") ? 'hilite bg-warning' : ''
