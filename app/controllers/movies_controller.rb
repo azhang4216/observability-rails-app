@@ -1,4 +1,6 @@
 class MoviesController < ApplicationController
+  # params: 
+  #   sort_by = 'title', 'release_date' depending on which the user clicks
 
   def show
     id = params[:id] # retrieve movie ID from URI route
@@ -9,11 +11,32 @@ class MoviesController < ApplicationController
   def index
     @movies = Movie.all 
     @all_ratings = Movie.all_ratings
-    @ratings_to_show = []
 
+    # PART 1: RATINGS
+    @ratings_to_show = []
+   
     if params.has_key?(:ratings)
-      @movies = Movie.with_ratings(params[:ratings].keys)
+      @ratings_to_show = params[:ratings].keys
+      @movies = @movies.with_ratings(params[:ratings].keys)
     end
+
+    ## We hash the ratings so that we remember even after sorting by title or date
+    session[:ratings] = @ratings_to_show
+    @ratings_to_show_hash = Hash[@ratings_to_show.collect {|key| [key, '1']}]
+
+    # PART 2: TITLE OR RELEASE DATE
+    ## We account for the possibility that user has not picked to sort by title or release date
+    if params.has_key?(:sort_by)
+      if params[:sort_by] == "title"
+        @movies = @movies.order(:title) 
+      elsif params[:sort_by] == "release_date"
+        @movies = @movies.order(:release_date)
+      end
+    end
+
+    ## Highlight the appropriate sorting method, if selected
+    @hilite_header_title = (params[:sort_by] == "title") ? 'hilite bg-warning' : ''
+    @hilite_header_release_date = (params[:sort_by] == "release_date") ? 'hilite bg-warning' : ''
   end
 
   def new
