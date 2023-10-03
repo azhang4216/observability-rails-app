@@ -12,8 +12,84 @@ class MoviesController < ApplicationController
     @movies = Movie.all 
     @all_ratings = Movie.all_ratings
 
+    # session[:uri] holds the correct uri
+
+
+
+    # For example, if you just go to the root url (and not passing any parameters explicitly) but there is a session where the ratings and/or sort is saved, do you redirect (as the error is mentioning no/incorrect redirect) so that the query parameters show up with the values populated from the session in the URL?
+    # if there is a session, we redirect to the appropriate url
+    # if session.has_key?(:ratings) && !params.has_key?(:ratings)
+    #   params[:ratings] = session[:ratings]
+    #   redirect_to movies_path(:sort_by => "release_date", :ratings => @ratings_to_show_hash)
+    #   return
+    # end
+
+    # PART 0: RESTful Routing
+    ## Based on session (previous inputs) and params (current input),
+    ## we create an appropriate path
+    # restful_path = get_path_from_movie_parameters(request.query_parameters)
+    
+    # puts restful_path
+    # puts request.query_parameters
+    # puts request.fullpath
+    
+    # if restful_path != request.fullpath
+    #   redirect_to movies_path(restful_path)
+    #   return
+    # end
+
+    # if we are 
+    # if request.path.key? :ratings && request[:ratings].keys.length = @all_ratings.length
+    #   puts "sup boo"
+    # end
+
+    # if request.path == '{"ratings"=>{"G"=>"1", "PG"=>"1", "PG-13"=>"1", "R"=>"1"}, "sort_by"=>"title"}'
+    #   redirect_to movies_path()  
+    # end
+    
+    # puts request.query_parameters()
+    # puts request.query_parameters() == '{"ratings"=>{"G"=>"1", "PG"=>"1", "PG-13"=>"1", "R"=>"1"}, "sort_by"=>"title"}'
+
+    # puts request.query_parameters.has_key?(:ratings)
+    # if !session.has_key?(:test)
+    #   session[:test] = "1"
+    #   redirect_to movies_path("/testing123/1234")
+    #   return
+    # end
+
+    
+
+    
+
+    # @all_filters = [] # gives us the path
+
+    # if !session.has_key?(:sort_by)
+    #   redirect_to movies_path()
+    # end
+
+    # we populate all_filters 
+    # if params.has_key?(:ratings)
+    #   @all_filters
+
+    
+
+
+    ## Inconsistent redirected paths happen when 
+
+
+    # if !(session.has_key?(:ratings) && session.has_key?(:sort_by))
+
+    #   @all_ratings_hash = Hash[@all_ratings.collect {|key| [key, '1']}]
+
+    # if !session.key?(:ratings) || !session.key?(:sort_by)
+    #   @all_ratings_hash = Hash[@all_ratings.collect {|key| [key, '1']}]
+    #   session[:ratings] = @all_ratings_hash if !session.key?(:ratings)
+    #   session[:sort_by] = '' if !session.key?(:sort_by)
+    #   redirect_to movies_path(:ratings => @all_ratings_hash, :sort_by => '') and return
+    # end
+
     # PART 1: RATINGS
-    @ratings_to_show = []
+    @ratings_to_show = @all_ratings
    
     if params.has_key?(:ratings)
       @ratings_to_show = params[:ratings].keys
@@ -43,6 +119,8 @@ class MoviesController < ApplicationController
     ## Highlight the appropriate sorting method, if selected
     @hilite_header_title = (params[:sort_by] == "title") ? 'hilite bg-warning' : ''
     @hilite_header_release_date = (params[:sort_by] == "release_date") ? 'hilite bg-warning' : ''
+    
+    
   end
 
   def new
@@ -78,5 +156,23 @@ class MoviesController < ApplicationController
   # This helps make clear which methods respond to requests, and which ones do not.
   def movie_params
     params.require(:movie).permit(:title, :rating, :description, :release_date)
+  end
+
+  def get_path_from_movie_parameters(query_parameters)
+    # e.g. {"utf8"=>"✓", "ratings"=>{"G"=>"1", "PG"=>"1", "PG-13"=>"1", "R"=>"1"}, "commit"=>"Refresh"}
+    restful_path = "/movies"
+
+    # we specify specific ratings in uri if not all are checked
+    if query_parameters.has_key?(:ratings) && query_parameters[:ratings].length < @all_ratings.length
+      selected_ratings = query_parameters[:ratings].keys.sort.join("&") # alphabetized for consistent uri
+      restful_path = "/ratings=" + selected_ratings
+    end
+
+    # we specify title or release date filter, if selected.
+    if query_parameters.has_key?(:sort_by)
+      restful_path = restful_path + "/sort_by=" + query_parameters[:sort_by]
+    end
+
+    return restful_path
   end
 end
