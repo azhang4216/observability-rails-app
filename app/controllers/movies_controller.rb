@@ -1,7 +1,4 @@
 class MoviesController < ApplicationController
-  # params: 
-  #   sort_by = 'title', 'release_date' depending on which the user clicks
-
   def show
     id = params[:id] # retrieve movie ID from URI route
     @movie = Movie.find(id) # look up movie by unique ID
@@ -11,12 +8,19 @@ class MoviesController < ApplicationController
   def index
     # STEP 1: Redirect to appropriate route in special cases 
 
-    ## note: here, params and session ratings all have the form {"G"=>"1",..}
-    ratings_to_use = params.has_key?(:ratings) ? params[:ratings] : \
-    (session.has_key?(:ratings) ? session[:ratings] : Movie.all_ratings_as_hash)
-    
+    ## note: params naturally uses form {"G" =>"1", "R" => "1"}, 
+    ##       but session can only use array or string. We make session an array of params' keys.
+
+    puts params[:ratings].instance_of?(Array)
+
+    ## here, ratings_to_use is an array of ratings we want to filter with
+    @ratings_to_use = params.has_key?(:ratings) ? (params[:ratings].instance_of?(Array) ? params[:ratings] : params[:ratings].keys) : \
+    (session.has_key?(:ratings) ? session[:ratings] : Movie.all_ratings)
+
     sort_by_to_use = params.has_key?(:sort_by) ? params[:sort_by] : \
     (session.has_key?(:sort_by) ? session[:sort_by] : nil)
+
+    puts(sort_by_to_use)
 
     if !params.has_key?(:ratings)
       ## redirect to the appropriate route 
@@ -24,29 +28,32 @@ class MoviesController < ApplicationController
         ## :sort_by could be unspecified, 
         ## since user starts with not having selected ordering by
         ## title nor release_date
-        redirect_to movie_path(:ratings => ratings_to_use)
+        redirect_to movies_path(:ratings => Movie.array_to_hash(@ratings_to_use))
       else
-        redirect_to movie_path(:ratings => ratings_to_use, :sort_by => sort_by_to_use)
+        redirect_to movies_path(:ratings => Movie.array_to_hash(@ratings_to_use), :sort_by => sort_by_to_use)
       end 
     end
 
     # Step 2. Filter movies accordingly & cache data in session 
     #         - we have params for ratings, and possibly sort_by
-    
+
+    # ## we always pass ratings as an array, not a hash with 1 values for filtering movies 
+    # @ratings_array_of_keys = ratings_to_use.collect {|ind| ind[0]}
+
     ## get rid of "1" value at the end for querying by ratings filter 
-    @ratings_array_of_keys = ratings_to_use.keys()
-    @movies = Movie.with_ratings(@ratings_array_of_keys)
+    @movies = Movie.with_ratings(@ratings_to_use)
+    @all_ratings = Movie.all_ratings
 
     if sort_by_to_use != nil 
       @movies = @movies.order(sort_by_to_use)
       session[:sort_by] = sort_by_to_use
     end
     
-    session[:ratings] = ratings_to_use
+    session[:ratings] = @ratings_to_use
  
-    ## Highlight the appropriate sorting method, if selected
-    @hilite_header_title = (params[:sort_by] == "title") ? 'hilite bg-warning' : ''
-    @hilite_header_release_date = (params[:sort_by] == "release_date") ? 'hilite bg-warning' : ''
+    ## Highlight the appropriate sorting method, if selected - params[:sort_by]
+    @hilite_header_title = (sort_by_to_use == "title") ? 'hilite bg-warning' : ''
+    @hilite_header_release_date = (sort_by_to_use == "release_date") ? 'hilite bg-warning' : ''
   end
 
   def new
