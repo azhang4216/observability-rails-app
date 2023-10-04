@@ -12,6 +12,8 @@ class MoviesController < ApplicationController
     @movies = Movie.all 
     @all_ratings = Movie.all_ratings
 
+    # TODO: pass in the correct rating filters based on session hash
+
     # session[:uri] holds the correct uri
 
 
@@ -90,14 +92,21 @@ class MoviesController < ApplicationController
 
     # PART 1: RATINGS
     @ratings_to_show = @all_ratings
+
+    if !params.has_key?(:ratings) && session.has_key?(:ratings)
+      # we use previously stored rating configurations
+      puts "hello world 2"
+      params[:ratings] = session[:ratings]
+    end
    
     if params.has_key?(:ratings)
-      @ratings_to_show = params[:ratings].keys
-      @movies = @movies.with_ratings(params[:ratings].keys)
+      puts "hello world 1"
+      @ratings_to_show = params[:ratings]
+      @movies = @movies.with_ratings(@ratings_to_show)
     end
 
     ## We hash the ratings so that we remember even after sorting by title or date
-    session[:ratings] = @ratings_to_show
+    session[:ratings] = params[:ratings]
     @ratings_to_show_hash = Hash[@ratings_to_show.collect {|key| [key, '1']}]
 
     # PART 2: TITLE OR RELEASE DATE
