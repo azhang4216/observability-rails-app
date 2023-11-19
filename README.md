@@ -35,6 +35,11 @@ rails server
 
 ./prometheus --web.listen-address="0.0.0.0:9090" 
 
+# Elastic APM
+`cd apm-server...`
+
+`./apm-server -e` start server
+
 # Sources Consulted
 https://grafana.com/docs/grafana/latest/setup-grafana/installation/mac/
 https://github.com/prometheus/client_ruby
