@@ -40,6 +40,9 @@ rails server
 
 `./apm-server -e` start server
 
+# Homework 4 - Trace Context Script
+Run `python3 homework4_tracecontext.py` to print all outputs of 6 example input headers in order.
+
 # Sources Consulted
 https://grafana.com/docs/grafana/latest/setup-grafana/installation/mac/
 https://github.com/prometheus/client_ruby
