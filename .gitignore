@@ -17,3 +17,11 @@
 /tmp
 log
 .byebug_history
+
+/filebeat-8.11.3-darwin-x86_64/*
+/data
+apm-server-8.10.4-darwin-x86_64.tar.gz
+apm-server-8.10.4-darwin-x86_64/
+config/elastic_apm.yml
+config/initializers/elastic_apm.rb
+filebeat-8.11.3-darwin-x86_64.tar.gz

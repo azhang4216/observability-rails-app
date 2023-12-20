@@ -1,9 +1,16 @@
+require 'ecs_logging/logger'
+
 class MoviesController < ApplicationController
+  include ElasticAPM::SpanHelpers
+  logger = EcsLogging::Logger.new($stdout)
+
   def show
     id = params[:id] # retrieve movie ID from URI route
+    logger.info('Retrieved movie ID from URI route')
     @movie = Movie.find(id) # look up movie by unique ID
     # will render app/views/movies/show.<extension> by default
   end
+  span_method :show
 
   def index
     # STEP 1: Redirect to appropriate route in special cases 
@@ -11,16 +18,12 @@ class MoviesController < ApplicationController
     ## note: params naturally uses form {"G" =>"1", "R" => "1"}, 
     ##       but session can only use array or string. We make session an array of params' keys.
 
-    puts params[:ratings].instance_of?(Array)
-
     ## here, ratings_to_use is an array of ratings we want to filter with
     @ratings_to_use = params.has_key?(:ratings) ? (params[:ratings].instance_of?(Array) ? params[:ratings] : params[:ratings].keys) : \
     (session.has_key?(:ratings) ? session[:ratings] : Movie.all_ratings)
 
     sort_by_to_use = params.has_key?(:sort_by) ? params[:sort_by] : \
     (session.has_key?(:sort_by) ? session[:sort_by] : nil)
-
-    puts(sort_by_to_use)
 
     if !params.has_key?(:ratings)
       ## redirect to the appropriate route 
@@ -48,6 +51,8 @@ class MoviesController < ApplicationController
       @movies = @movies.order(sort_by_to_use)
       session[:sort_by] = sort_by_to_use
     end
+
+    logger.info("Found all filtered movies")
     
     session[:ratings] = @ratings_to_use
  
@@ -55,34 +60,43 @@ class MoviesController < ApplicationController
     @hilite_header_title = (sort_by_to_use == "title") ? 'hilite bg-warning' : ''
     @hilite_header_release_date = (sort_by_to_use == "release_date") ? 'hilite bg-warning' : ''
   end
+  span_method :index
 
   def new
     # default: render 'new' template
   end
+  span_method :new
 
   def create
     @movie = Movie.create!(movie_params)
     flash[:notice] = "#{@movie.title} was successfully created."
+    logger.info("#{@movie.title} was successfully created")
     redirect_to movies_path
   end
+  span_method :create
 
   def edit
     @movie = Movie.find params[:id]
   end
+  span_method :edit
 
   def update
     @movie = Movie.find params[:id]
     @movie.update_attributes!(movie_params)
     flash[:notice] = "#{@movie.title} was successfully updated."
+    logger.info("#{@movie.title} was successfully updated")
     redirect_to movie_path(@movie)
   end
+  span_method :update
 
   def destroy
     @movie = Movie.find(params[:id])
     @movie.destroy
     flash[:notice] = "Movie '#{@movie.title}' deleted."
+    logger.info("Movie '#{@movie.title}' deleted")
     redirect_to movies_path
   end
+  span_method :destroy
 
   private
   # Making "internal" methods private is not required, but is a common practice.
