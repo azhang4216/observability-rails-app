@@ -1,9 +1,10 @@
 '''
 Angela Zhang
-November 28, 2023
+November 28, 2023, revised January 2, 2024
 Observability (Prof. Emily Stolfo)
 '''
 import re
+import secrets
 
 
 # Constants
@@ -52,8 +53,11 @@ def insert_datacat_tracestate(header):
         and its value should be a new trace identifier formatted [version]-[trace-id]-[parent-id]-[flags].
         '''
         version = "00" # The version of the W3C Trace Context specification. The current version is "00".
-        trace_id = "0af7651916cd43dd8448eb211c80319c" # A 32-character hexadecimal value
         flags = "01" # The least significant bit (LSB) is the sampled flag, indicating whether the trace is sampled.
+
+        random_bytes = secrets.token_bytes(16)
+        trace_id = random_bytes.hex() # A 32-character hexadecimal value
+        
         updated_traceparent = f"{version}-{trace_id}-{CURR_ID}-{flags}"
 
     # Second, we create the outgoing tracestate
@@ -103,34 +107,6 @@ input_headers = [
     { }
 ]
 
-expected_headers = [
-    {
-        "traceparent": "00-0af7651916cd43dd8448eb211c80319c-63674ce9eb26b347-01",
-        "tracestate": "dc=.2,congo=ucfJifl5GOE,rojo=00f067aa0ba902b7"
-    },
-    {
-        "traceparent": "00-0af7651916cd43dd8448eb211c80319c-63674ce9eb26b347-01",
-        "tracestate": "dc=.2,congo=ucfJifl5GOE"
-    },
-    {
-        "traceparent": "00-0af7651916cd43dd8448eb211c80319c-63674ce9eb26b347-01",
-        "tracestate": "dc=.2,congo=ucfJifl5GOE"
-    },
-    {
-        "traceparent": "00-0af7651916cd43dd8448eb211c80319c-63674ce9eb26b347-01",
-        "tracestate": "dc=.2,congo=ucfJifl5GOE"
-    },
-    {
-        "traceparent": "00-0af7651916cd43dd8448eb211c80319c-63674ce9eb26b347-01",
-        "tracestate": "dc=.2"
-    },
-    {
-        "traceparent": "00-0af7651916cd43dd8448eb211c80319c-63674ce9eb26b347-01",
-        "tracestate": "dc=.2"
-    }
-]
-
 for i in range(len(input_headers)):
     outgoing_header = insert_datacat_tracestate(input_headers[i])
-    # print(outgoing_header == expected_headers[i]) # Should be True
     print(outgoing_header)
